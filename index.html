@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>饮食时间调查</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .bubble {
+            background-color: #fff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            position: relative;
+            display: inline-block;
+            max-width: 85%;
+            animation: fadeIn 0.6s ease-out;
+            font-size: 18px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            margin-left: -12px;
+            border-width: 12px 12px 0;
+            border-style: solid;
+            border-color: #fff transparent transparent;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 40px;
+        }
+        
+        .option {
+            background-color: #5b8cff;
+            color: white;
+            border: none;
+            border-radius: 32px;
+            padding: 15px 25px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .option:nth-child(1) { background-color: #ff7b5b; }
+        .option:nth-child(2) { background-color: #5b8cff; }
+        .option:nth-child(3) { background-color: #5bff8c; }
+        
+        .result {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            animation: fadeIn 0.6s ease-out;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .result-content {
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .result-text {
+            font-size: 22px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .highlight {
+            color: #ff5b5b;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .map-container {
+            width: 320px;
+            height: 320px;
+            position: relative;
+            margin: 25px auto;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .map {
+            width: 100%;
+            height: 100%;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/China_blank_map.svg/1200px-China_blank_map.svg.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+            background-color: #f0f7ff;
+        }
+        
+        .dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.8); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .close-btn {
+            margin-top: 30px;
+            background-color: #5b8cff;
+            color: white;
+            border: none;
+            border-radius: 32px;
+            padding: 12px 28px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .close-btn:hover {
+            background-color: #3a6fd6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stats {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .emoji {
+            font-size: 28px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="bubble">今天中午，你吃的这顿饭花了多少时间？</div>
+        
+        <div class="options">
+            <button class="option" onclick="showResult(1)"><span class="emoji">👩🍳</span>60分钟现做</button>
+            <button class="option" onclick="showResult(2)"><span class="emoji">🚴</span>15分钟外卖</button>
+            <button class="option" onclick="showResult(3)"><span class="emoji">⚡</span>5分钟加热</button>
+        </div>
+        
+        <div class="result" id="result">
+            <div class="result-content">
+                <div class="result-text" id="resultText"></div>
+                <div class="map-container">
+                    <div class="map" id="map"></div>
+                </div>
+                <div class="stats" id="stats"></div>
+                <button class="close-btn" onclick="closeResult()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const responses = [
+            {
+                text: "选择<span class='highlight'>①</span>的你，属于全国<span class='highlight'>12%</span>的'厨房坚守者'<br>坚持现做现吃的传统饮食方式",
+                stats: "👵 中老年占比68% | 🏡 二三线城市为主 | 🌱 健康关注度92%",
+                color: "#ff7b5b",
+                dotCount: 30
+            },
+            {
+                text: "选择<span class='highlight'>②</span>的你，和全国<span class='highlight'>58%</span>城市人群一样<br>过着'外卖依赖型'快节奏生活",
+                stats: "👨💼 上班族占比82% | 🏙️ 一线城市为主 | ⏱️ 平均等待时间28分钟",
+                color: "#5b8cff",
+                dotCount: 120
+            },
+            {
+                text: "选择<span class='highlight'>③</span>的你，已经和全国<span class='highlight'>2.6亿人</span>一起加入了<br>[预制菜生活圈]",
+                stats: "👩🎓 年轻人占比76% | 🏠 独居人群为主 | 💰 月均消费300-500元",
+                color: "#5bff8c",
+                dotCount: 200
+            }
+        ];
+
+        function showResult(choice) {
+            const result = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+            const stats = document.getElementById('stats');
+            const response = responses[choice-1];
+            
+            resultText.innerHTML = response.text;
+            stats.innerHTML = response.stats;
+            result.style.display = 'flex';
+            
+            // Clear previous dots
+            const map = document.getElementById('map');
+            map.innerHTML = '';
+            
+            // Create animated dots on map with appropriate color
+            for (let i = 0; i < response.dotCount; i++) {
+                createDot(map, response.color);
+            }
+            
+            // Add more dots gradually for option 3
+            if (choice === 3) {
+                let dotCount = response.dotCount;
+                const interval = setInterval(() => {
+                    if (dotCount >= 250) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    createDot(map, response.color);
+                    dotCount++;
+                }, 30);
+            }
+        }
+        
+        function createDot(map, color) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.backgroundColor = color;
+            
+            // Random position within China's approximate boundaries
+            const left = 10 + Math.random() * 80;
+            const top = 10 + Math.random() * 80;
+            
+            dot.style.left = `${left}%`;
+            dot.style.top = `${top}%`;
+            
+            // Random delay for animation
+            dot.style.animationDelay = `${Math.random() * 2}s`;
+            
+            map.appendChild(dot);
+        }
+        
+        function closeResult() {
+            document.getElementById('result').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
